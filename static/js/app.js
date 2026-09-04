@@ -5,11 +5,17 @@ let isStreaming = false;
 let telemetryInterval = null;
 let recordedIncidents = [];
 let sliderDebounceTimer = null;
+let knownSnapshotUrls = new Set();
+let allLoadedSnapshots = [];
 
 // Initialize Dashboard
 document.addEventListener("DOMContentLoaded", () => {
     initClock();
     setupDropZone();
+    loadPersistedSnapshots();
+    // Poll telemetry periodically even before manual stream start
+    pollTelemetry();
+    setInterval(pollTelemetry, 1000);
 });
 
 // Real-Time Top Clock
@@ -242,62 +248,119 @@ function renderIncidents(incidents) {
     });
 }
 
-let lastRenderedSnapshotCount = -1;
+// Create a snapshot card element
+function createSnapshotCardElement(item, alertNumber) {
+    const card = document.createElement("div");
+    card.className = "gallery-item-card";
+    const imgUrl = item.url || item.snapshot;
+    const alertId = alertNumber || item.id || item.frame || "Alert";
+    card.onclick = () => openSnapshotModal(imgUrl, item.timestamp, item.frame, item.confidence || "Detected");
+    card.innerHTML = `
+        <div class="gallery-img-wrapper">
+            <img src="${imgUrl}" alt="Crime scene snapshot frame ${item.frame}" loading="lazy">
+            <div class="gallery-overlay">
+                <span class="overlay-icon">🔍</span>
+                <span class="overlay-text">Click to View Popup</span>
+            </div>
+            <span class="gallery-tag-alert">🚨 ALERT #${alertId}</span>
+        </div>
+        <div class="gallery-item-info">
+            <div class="gallery-item-top">
+                <span class="gallery-time">⏱️ ${item.timestamp}</span>
+                <span class="gallery-conf">${item.confidence || "Detected"}</span>
+            </div>
+            <div class="gallery-item-bot">
+                <span>Frame #${item.frame || '0'}</span>
+                <span class="gallery-inspect-btn">Open Popup ↗</span>
+            </div>
+        </div>
+    `;
+    return card;
+}
 
+// Load all saved snapshots on page load or refresh
+async function loadPersistedSnapshots() {
+    try {
+        const res = await fetch("/api/snapshots");
+        if (!res.ok) return;
+        const data = await res.json();
+        const snapshots = data.snapshots || [];
+
+        if (snapshots.length === 0) return;
+
+        const grid = document.getElementById("snapshotGrid");
+        const emptyState = document.getElementById("emptyGalleryState");
+        const counter = document.getElementById("galleryCounter");
+
+        if (emptyState) emptyState.style.display = "none";
+        grid.innerHTML = "";
+
+        snapshots.forEach((item, idx) => {
+            const imgUrl = item.url || item.snapshot;
+            if (!knownSnapshotUrls.has(imgUrl)) {
+                knownSnapshotUrls.add(imgUrl);
+                allLoadedSnapshots.push(item);
+            }
+            const card = createSnapshotCardElement(item, snapshots.length - idx);
+            grid.appendChild(card);
+        });
+
+        if (counter) {
+            counter.innerText = `${knownSnapshotUrls.size} Snapshot${knownSnapshotUrls.size === 1 ? '' : 's'}`;
+        }
+
+        // Restore sidebar incident counter and event items on page refresh
+        const incidentCounter = document.getElementById("incidentCounter");
+        if (incidentCounter) {
+            incidentCounter.innerText = `${snapshots.length} Events`;
+        }
+        renderIncidents(snapshots.map((s, i) => ({
+            id: s.frame || (i + 1),
+            timestamp: s.timestamp,
+            frame: s.frame,
+            type: "Shoplifting Alert",
+            confidence: s.confidence || "Detected",
+        })));
+    } catch (e) {
+        console.warn("Failed to load persisted snapshots:", e);
+    }
+}
+
+// Live real-time gallery updater during video playback
 function renderSnapshotGallery(incidents) {
     const grid = document.getElementById("snapshotGrid");
+    const emptyState = document.getElementById("emptyGalleryState");
     const counter = document.getElementById("galleryCounter");
     if (!grid) return;
 
-    // Filter only incidents that have snapshots
-    const snapshots = incidents.filter(item => item.snapshot);
+    // Filter only new incidents that have a snapshot not already displayed
+    const newSnapshots = (incidents || []).filter(item => item.snapshot && !knownSnapshotUrls.has(item.snapshot));
+
+    if (newSnapshots.length === 0) return;
+
+    if (emptyState) emptyState.style.display = "none";
+
+    newSnapshots.forEach(item => {
+        knownSnapshotUrls.add(item.snapshot);
+        allLoadedSnapshots.unshift(item);
+        const card = createSnapshotCardElement({
+            url: item.snapshot,
+            timestamp: item.timestamp,
+            frame: item.frame,
+            confidence: item.confidence,
+            id: item.id,
+        }, item.id || knownSnapshotUrls.size);
+
+        // Prepend directly to top of grid so latest appears first
+        grid.insertBefore(card, grid.firstChild);
+    });
 
     if (counter) {
-        counter.innerText = `${snapshots.length} Snapshot${snapshots.length === 1 ? '' : 's'}`;
+        counter.innerText = `${knownSnapshotUrls.size} Snapshot${knownSnapshotUrls.size === 1 ? '' : 's'}`;
     }
-
-    if (snapshots.length === 0) {
-        return;
-    }
-
-    // Only re-render if count changed to prevent DOM thrashing
-    if (snapshots.length === lastRenderedSnapshotCount) {
-        return;
-    }
-    lastRenderedSnapshotCount = snapshots.length;
-
-    grid.innerHTML = "";
-
-    // Show latest snapshots first in responsive grid covering full width
-    [...snapshots].reverse().forEach((item, idx) => {
-        const card = document.createElement("div");
-        card.className = "gallery-item-card";
-        card.onclick = () => openSnapshotModal(item.snapshot, item.timestamp, item.frame, item.confidence);
-        card.innerHTML = `
-            <div class="gallery-img-wrapper">
-                <img src="${item.snapshot}" alt="Crime scene snapshot frame ${item.frame}" loading="lazy">
-                <div class="gallery-overlay">
-                    <span class="overlay-icon">🔍</span>
-                    <span class="overlay-text">Click to View Popup</span>
-                </div>
-                <span class="gallery-tag-alert">🚨 ALERT #${item.id || (snapshots.length - idx)}</span>
-            </div>
-            <div class="gallery-item-info">
-                <div class="gallery-item-top">
-                    <span class="gallery-time">⏱️ ${item.timestamp}</span>
-                    <span class="gallery-conf">${item.confidence}</span>
-                </div>
-                <div class="gallery-item-bot">
-                    <span>Frame #${item.frame}</span>
-                    <span class="gallery-inspect-btn">Open Popup ↗</span>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
 }
 
-function clearGallery() {
+async function clearGallery() {
     const grid = document.getElementById("snapshotGrid");
     if (grid) {
         grid.innerHTML = `
@@ -308,9 +371,16 @@ function clearGallery() {
             </div>
         `;
     }
-    lastRenderedSnapshotCount = -1;
+    knownSnapshotUrls.clear();
+    allLoadedSnapshots = [];
     const counter = document.getElementById("galleryCounter");
     if (counter) counter.innerText = "0 Snapshots";
+
+    try {
+        await fetch("/api/snapshots/clear", { method: "POST" });
+    } catch (e) {
+        console.warn("Failed to clear backend snapshots:", e);
+    }
 }
 
 function openSnapshotModal(imgUrl, timestamp, frame, conf) {

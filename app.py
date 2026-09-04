@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from datetime import datetime
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -17,8 +18,10 @@ load_dotenv()
 # Create directories
 os.makedirs("uploads", exist_ok=True)
 os.makedirs("outputs", exist_ok=True)
+os.makedirs("outputs/snapshots", exist_ok=True)
 os.makedirs("static/css", exist_ok=True)
 os.makedirs("static/js", exist_ok=True)
+os.makedirs("static/snapshots", exist_ok=True)
 os.makedirs("templates", exist_ok=True)
 
 app = FastAPI(title="AI Shoplifting & Theft Detection System", version="2.0.0")
@@ -162,6 +165,53 @@ async def download_output():
             filename="shoplifting_output.avi",
         )
     raise HTTPException(status_code=404, detail="No recorded output available yet.")
+
+
+@app.get("/api/snapshots")
+async def get_snapshots():
+    """List all persisted crime scene snapshots, newest first."""
+    snapshots = []
+    snap_dir = os.path.join("static", "snapshots")
+    if os.path.exists(snap_dir):
+        files = [f for f in os.listdir(snap_dir) if f.lower().endswith((".jpg", ".jpeg", ".png"))]
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(snap_dir, x)), reverse=True)
+
+        for f in files:
+            full_path = os.path.join(snap_dir, f)
+            mtime = os.path.getmtime(full_path)
+            time_str = datetime.fromtimestamp(mtime).strftime("%H:%M:%S")
+            frame_num = 0
+            if "_f" in f:
+                try:
+                    parts = f.split("_f")[1].split("_")
+                    frame_num = int(parts[0])
+                except Exception:
+                    frame_num = 0
+
+            snapshots.append({
+                "url": f"/static/snapshots/{f}",
+                "filename": f,
+                "frame": frame_num,
+                "timestamp": time_str,
+                "confidence": "Alert",
+            })
+    return {"snapshots": snapshots}
+
+
+@app.post("/api/snapshots/clear")
+async def clear_snapshots():
+    """Clear all saved crime scene snapshots from disk."""
+    snap_dir = os.path.join("static", "snapshots")
+    count = 0
+    if os.path.exists(snap_dir):
+        for f in os.listdir(snap_dir):
+            if f.lower().endswith((".jpg", ".jpeg", ".png")):
+                try:
+                    os.remove(os.path.join(snap_dir, f))
+                    count += 1
+                except Exception:
+                    pass
+    return {"status": "cleared", "count": count}
 
 
 if __name__ == "__main__":

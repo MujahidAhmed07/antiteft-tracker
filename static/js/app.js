@@ -227,11 +227,23 @@ function renderIncidents(incidents) {
     incidents.slice(-15).reverse().forEach(item => {
         const div = document.createElement("div");
         div.className = "incident-item";
+        
+        let snapshotHtml = "";
+        if (item.snapshot) {
+            snapshotHtml = `
+                <div class="incident-thumbnail-wrap" onclick="openSnapshotModal('${item.snapshot}', '${item.timestamp}', '${item.frame}', '${item.confidence}')" title="Click to view & download full crime scene photo">
+                    <img src="${item.snapshot}" alt="Theft scene snapshot" class="incident-thumb-img">
+                    <span class="thumb-zoom-badge">📸 View Full Image</span>
+                </div>
+            `;
+        }
+
         div.innerHTML = `
             <div class="incident-item-header">
                 <span class="incident-title">🚨 ${item.type}</span>
                 <span class="incident-time">${item.timestamp}</span>
             </div>
+            ${snapshotHtml}
             <div class="incident-item-footer">
                 <span>Frame #${item.frame}</span>
                 <span style="color: var(--accent-cyan);">Conf: ${item.confidence}</span>
@@ -239,6 +251,29 @@ function renderIncidents(incidents) {
         `;
         container.appendChild(div);
     });
+}
+
+function openSnapshotModal(imgUrl, timestamp, frame, conf) {
+    const modal = document.getElementById("snapshotModal");
+    const img = document.getElementById("modalSnapshotImg");
+    const title = document.getElementById("modalSnapshotTitle");
+    const meta = document.getElementById("modalSnapshotMeta");
+    const dlBtn = document.getElementById("modalDownloadBtn");
+
+    if (!modal || !img) return;
+
+    img.src = imgUrl;
+    title.innerText = `Theft Evidence Capture: Frame #${frame}`;
+    meta.innerHTML = `<span><strong>Timestamp:</strong> ${timestamp}</span> • <span><strong>Frame:</strong> #${frame}</span> • <span style="color: var(--accent-cyan);"><strong>Confidence:</strong> ${conf}</span>`;
+    dlBtn.href = imgUrl;
+    dlBtn.download = `theft_evidence_frame_${frame}.jpg`;
+
+    modal.classList.remove("hidden");
+}
+
+function closeSnapshotModal() {
+    const modal = document.getElementById("snapshotModal");
+    if (modal) modal.classList.add("hidden");
 }
 
 function clearIncidentLog() {

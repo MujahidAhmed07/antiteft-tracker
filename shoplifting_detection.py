@@ -180,6 +180,8 @@ class ShopliftingDetector:
         start_time = time.time()
         smoothed_fps = 0.0
         prev_time = time.time()
+        last_snapshot_frame = -100
+        os.makedirs("outputs/snapshots", exist_ok=True)
 
         while True:
             ret, frame = self.cap.read()
@@ -218,6 +220,16 @@ class ShopliftingDetector:
                 frame, status, smoothed_fps, self.frame_count, self.device,
                 extra_footer="Press 'q' to Quit",
             )
+
+            # Capture and save scene snapshot during shoplifting alert
+            if "ALERT" in status and (self.frame_count - last_snapshot_frame > 35):
+                last_snapshot_frame = self.frame_count
+                snapshot_file = os.path.join(
+                    "outputs", "snapshots",
+                    f"incident_frame_{self.frame_count}_{int(time.time())}.jpg",
+                )
+                cv2.imwrite(snapshot_file, frame)
+                print(f"[EVIDENCE CAPTURED] 📸 Shoplifting scene image saved: {snapshot_file}")
 
             # Write frame to file
             self._setup_video_writer(frame)

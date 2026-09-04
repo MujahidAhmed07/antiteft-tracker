@@ -238,6 +238,30 @@
         </aside>
     </main>
 
+    <!-- Forensic Snapshot Lightbox Modal -->
+    <div id="snapshotModal" class="snapshot-modal hidden" onclick="if(event.target===this) closeSnapshotModal()">
+        <div class="snapshot-modal-dialog">
+            <div class="snapshot-modal-header">
+                <div class="modal-title-group">
+                    <span class="badge-alert">CRIME SCENE CAPTURE</span>
+                    <h3 id="modalSnapshotTitle">Incident Snapshot</h3>
+                </div>
+                <button class="btn-modal-close" onclick="closeSnapshotModal()">&times;</button>
+            </div>
+            <div class="snapshot-modal-body">
+                <img id="modalSnapshotImg" src="" alt="Theft Scene Capture">
+            </div>
+            <div class="snapshot-modal-footer">
+                <div class="modal-meta" id="modalSnapshotMeta">
+                    <span>Frame: #0</span> • <span>Time: 00:00:00</span>
+                </div>
+                <a id="modalDownloadBtn" href="#" download="theft_snapshot.jpg" class="btn btn-primary btn-sm">
+                    💾 Save Image to PC
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/app.js"></script>
 </body>
 </html>

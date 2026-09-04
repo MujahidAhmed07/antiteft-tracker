@@ -53,6 +53,7 @@ class ShopliftingDetectionEngine:
                 "alerts_count": 0,
                 "active_alert": False,
                 "active_alert_text": "",
+                "latest_snapshot": None,
                 "incidents": [],
                 "is_processing": False,
             }
@@ -223,28 +224,29 @@ class ShopliftingDetectionEngine:
                     draw_normal_box(frame, x1, y1, x2, y2, conf, f"{label} {conf * 100:.0f}%")
 
                 # Handle Alert State & Telemetry
+                trigger_snapshot = False
+                snapshot_info = None
+
                 if theft_detected or alert_cooldown > 0:
                     if alert_cooldown > 0 and not theft_detected:
                         alert_cooldown -= 1
                     status_text = "ALERT"
 
+                    if theft_detected and (curr_frame_idx - last_logged_alert_frame > 30):
+                        last_logged_alert_frame = curr_frame_idx
+                        trigger_snapshot = True
+                        ts = datetime.now().strftime("%H:%M:%S")
+                        conf_str = f"{round(float(thief_boxes[0][4] if thief_boxes else 0.88) * 100, 1)}%"
+                        snapshot_filename = f"theft_f{curr_frame_idx}_{int(time.time())}.jpg"
+                        snapshot_info = {
+                            "filename": snapshot_filename,
+                            "timestamp": ts,
+                            "confidence": conf_str,
+                        }
+
                     with self._lock:
                         self._telemetry[session_id]["active_alert"] = True
                         self._telemetry[session_id]["active_alert_text"] = "Alert Detected"
-
-                        # Log incident once every 30 frames
-                        if curr_frame_idx - last_logged_alert_frame > 30:
-                            last_logged_alert_frame = curr_frame_idx
-                            self._telemetry[session_id]["alerts_count"] += 1
-                            ts = datetime.now().strftime("%H:%M:%S")
-                            self._telemetry[session_id]["incidents"].append({
-                                "id": self._telemetry[session_id]["alerts_count"],
-                                "timestamp": ts,
-                                "frame": curr_frame_idx,
-                                "type": "Alert",
-                                "severity": "CRITICAL",
-                                "confidence": f"{round(float(thief_boxes[0][4] if thief_boxes else 0.88) * 100, 1)}%",
-                            })
                 else:
                     status_text = "Normal - Monitoring Active"
                     with self._lock:
@@ -256,6 +258,33 @@ class ShopliftingDetectionEngine:
 
                 # Draw HUD using shared utility
                 draw_hud(frame, status_text, smoothed_fps, curr_frame_idx, self.device)
+
+                # Capture and persist scene snapshot with HUD & bounding boxes
+                if trigger_snapshot and snapshot_info:
+                    try:
+                        os.makedirs("static/snapshots", exist_ok=True)
+                        os.makedirs("outputs/snapshots", exist_ok=True)
+                        web_path = os.path.join("static", "snapshots", snapshot_info["filename"])
+                        disk_path = os.path.join("outputs", "snapshots", snapshot_info["filename"])
+                        cv2.imwrite(web_path, frame)
+                        cv2.imwrite(disk_path, frame)
+                        snapshot_url = f"/static/snapshots/{snapshot_info['filename']}"
+                        print(f"[EVIDENCE CAPTURED] 📸 Shoplifting scene snapshot saved: {disk_path}")
+
+                        with self._lock:
+                            self._telemetry[session_id]["alerts_count"] += 1
+                            self._telemetry[session_id]["latest_snapshot"] = snapshot_url
+                            self._telemetry[session_id]["incidents"].append({
+                                "id": self._telemetry[session_id]["alerts_count"],
+                                "timestamp": snapshot_info["timestamp"],
+                                "frame": curr_frame_idx,
+                                "type": "Shoplifting Alert",
+                                "severity": "CRITICAL",
+                                "confidence": snapshot_info["confidence"],
+                                "snapshot": snapshot_url,
+                            })
+                    except Exception as snap_err:
+                        print(f"[WARN] Failed to save snapshot: {snap_err}")
 
                 # Write frame to file
                 if writer:

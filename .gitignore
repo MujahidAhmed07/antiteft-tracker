@@ -27,8 +27,9 @@ env/
 # Uploaded files
 uploads/*
 
-# Output recordings
+# Output recordings & snapshots
 outputs/*
+static/snapshots/*
 
 # Model weights (large files)
 *.pt

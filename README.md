@@ -29,11 +29,18 @@ Retail shrinkage and in-store theft account for tens of billions of dollars in g
   - **Live MJPEG Video Stream** with dynamic Head-Up Display (HUD) overlays, real-time FPS monitoring, and color-coded alert bounding boxes.
   - **Custom Video & Demo Ingestion**: Test pre-packaged surveillance clips (`demo1.mp4`, `demo2.mp4`, `demo3.mp4`) or upload proprietary CCTV footage directly through the web UI.
   - **Live Webcam Support**: Direct integration with hardware cameras (device `0`) for live on-premise testing.
+- **Crime Scene Snapshot Evidence Gallery**:
+  - Real-time automated image captures saved at the exact moment of detected theft.
+  - Full-width responsive evidence grid below the surveillance screen with live card additions.
+  - High-resolution **Popup Lightbox Modal** with incident metadata and 1-click evidence image download.
+  - Disk-backed snapshot persistence (`GET /api/snapshots`) ensuring no captures are lost on page refresh.
 - **Incident Telemetry & Forensic Export**:
   - Real-time timestamped event logs recording incident IDs, confidence scores, and frame numbers.
-  - Instant one-click evidence recording download (`.avi` video playback).
+  - Instant one-click evidence video recording download (`.avi` playback).
+- **Simple Desktop Launcher**:
+  - Native GUI launcher (`simple_app.py`) with Windows file browser dialog for zero-setup video selection.
 - **Enterprise-Ready REST API**:
-  - FastAPI-driven asynchronous endpoints for video streaming (`/api/stream`), real-time telemetry polling (`/api/telemetry`), video uploads (`/api/upload`), and optional header-based API key authentication (`X-API-Key`).
+  - FastAPI-driven asynchronous endpoints for video streaming (`/api/stream`), telemetry polling (`/api/telemetry`), snapshot retrieval (`/api/snapshots`), video uploads (`/api/upload`), and optional API key authentication (`X-API-Key`).
 
 ---
 

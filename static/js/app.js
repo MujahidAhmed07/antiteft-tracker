@@ -190,9 +190,10 @@ async function fetchTelemetry() {
             updateStatusHUD("MONITORING", false);
         }
 
-        // Update Incident Log
+        // Update Incident Log & Snapshot Evidence Gallery
         if (data.incidents && data.incidents.length > 0) {
             renderIncidents(data.incidents);
+            renderSnapshotGallery(data.incidents);
         }
 
         // Check if stream completed
@@ -231,9 +232,9 @@ function renderIncidents(incidents) {
         let snapshotHtml = "";
         if (item.snapshot) {
             snapshotHtml = `
-                <div class="incident-thumbnail-wrap" onclick="openSnapshotModal('${item.snapshot}', '${item.timestamp}', '${item.frame}', '${item.confidence}')" title="Click to view & download full crime scene photo">
+                <div class="incident-thumbnail-wrap" onclick="openSnapshotModal('${item.snapshot}', '${item.timestamp}', '${item.frame}', '${item.confidence}')" title="Click to view full crime scene photo in popup">
                     <img src="${item.snapshot}" alt="Theft scene snapshot" class="incident-thumb-img">
-                    <span class="thumb-zoom-badge">📸 View Full Image</span>
+                    <span class="thumb-zoom-badge">📸 View in Popup</span>
                 </div>
             `;
         }
@@ -251,6 +252,77 @@ function renderIncidents(incidents) {
         `;
         container.appendChild(div);
     });
+}
+
+let lastRenderedSnapshotCount = -1;
+
+function renderSnapshotGallery(incidents) {
+    const grid = document.getElementById("snapshotGrid");
+    const counter = document.getElementById("galleryCounter");
+    if (!grid) return;
+
+    // Filter only incidents that have snapshots
+    const snapshots = incidents.filter(item => item.snapshot);
+
+    if (counter) {
+        counter.innerText = `${snapshots.length} Snapshot${snapshots.length === 1 ? '' : 's'}`;
+    }
+
+    if (snapshots.length === 0) {
+        return;
+    }
+
+    // Only re-render if count changed to prevent DOM thrashing
+    if (snapshots.length === lastRenderedSnapshotCount) {
+        return;
+    }
+    lastRenderedSnapshotCount = snapshots.length;
+
+    grid.innerHTML = "";
+
+    // Show latest snapshots first in responsive grid covering full width
+    [...snapshots].reverse().forEach((item, idx) => {
+        const card = document.createElement("div");
+        card.className = "gallery-item-card";
+        card.onclick = () => openSnapshotModal(item.snapshot, item.timestamp, item.frame, item.confidence);
+        card.innerHTML = `
+            <div class="gallery-img-wrapper">
+                <img src="${item.snapshot}" alt="Crime scene snapshot frame ${item.frame}" loading="lazy">
+                <div class="gallery-overlay">
+                    <span class="overlay-icon">🔍</span>
+                    <span class="overlay-text">Click to View Popup</span>
+                </div>
+                <span class="gallery-tag-alert">🚨 ALERT #${item.id || (snapshots.length - idx)}</span>
+            </div>
+            <div class="gallery-item-info">
+                <div class="gallery-item-top">
+                    <span class="gallery-time">⏱️ ${item.timestamp}</span>
+                    <span class="gallery-conf">${item.confidence}</span>
+                </div>
+                <div class="gallery-item-bot">
+                    <span>Frame #${item.frame}</span>
+                    <span class="gallery-inspect-btn">Open Popup ↗</span>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function clearGallery() {
+    const grid = document.getElementById("snapshotGrid");
+    if (grid) {
+        grid.innerHTML = `
+            <div class="empty-gallery-state" id="emptyGalleryState">
+                <div class="empty-icon">📷</div>
+                <h4>No Crime Scene Images Captured Yet</h4>
+                <p>When shoplifting or suspicious proximity is detected during video playback, evidence scene images will appear here in a full-width grid automatically.</p>
+            </div>
+        `;
+    }
+    lastRenderedSnapshotCount = -1;
+    const counter = document.getElementById("galleryCounter");
+    if (counter) counter.innerText = "0 Snapshots";
 }
 
 function openSnapshotModal(imgUrl, timestamp, frame, conf) {
@@ -276,6 +348,13 @@ function closeSnapshotModal() {
     if (modal) modal.classList.add("hidden");
 }
 
+// Close popup modal on ESC key
+window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        closeSnapshotModal();
+    }
+});
+
 function clearIncidentLog() {
     const container = document.getElementById("incidentFeed");
     if (container) {
@@ -288,6 +367,7 @@ function clearIncidentLog() {
         `;
     }
     document.getElementById("incidentCounter").innerText = "0 Events";
+    clearGallery();
 }
 
 // Download Output

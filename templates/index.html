@@ -236,6 +236,33 @@
             </div>
 
         </aside>
+
+        <!-- Full-Width Crime Scene Snapshot Evidence Gallery -->
+        <section class="card full-width-gallery-section" id="evidenceGallerySection">
+            <div class="card-header gallery-header">
+                <div class="header-left">
+                    <div class="title-with-pill">
+                        <span class="channel-pill pill-alert">FORENSIC EVIDENCE</span>
+                        <h3>📸 Crime Scene Incident Snapshot Gallery</h3>
+                    </div>
+                    <p class="gallery-subtitle">Automated image captures recorded at the moment of detected theft interaction • Click any frame to inspect in popup modal</p>
+                </div>
+                <div class="gallery-actions">
+                    <span class="counter-badge" id="galleryCounter">0 Snapshots</span>
+                    <button class="btn btn-xs btn-outline" onclick="clearGallery()">Clear Gallery</button>
+                </div>
+            </div>
+
+            <!-- Responsive Grid Container Covering Full Width Space Below Screen -->
+            <div class="snapshot-grid-container" id="snapshotGrid">
+                <div class="empty-gallery-state" id="emptyGalleryState">
+                    <div class="empty-icon">📷</div>
+                    <h4>No Crime Scene Images Captured Yet</h4>
+                    <p>When shoplifting or suspicious proximity is detected during video playback, evidence scene images will appear here in a full-width grid automatically.</p>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Forensic Snapshot Lightbox Modal -->

@@ -225,26 +225,14 @@ function renderIncidents(incidents) {
     if (emptyState) emptyState.style.display = "none";
 
     container.innerHTML = "";
-    incidents.slice(-15).reverse().forEach(item => {
+    incidents.slice(-20).reverse().forEach(item => {
         const div = document.createElement("div");
         div.className = "incident-item";
-        
-        let snapshotHtml = "";
-        if (item.snapshot) {
-            snapshotHtml = `
-                <div class="incident-thumbnail-wrap" onclick="openSnapshotModal('${item.snapshot}', '${item.timestamp}', '${item.frame}', '${item.confidence}')" title="Click to view full crime scene photo in popup">
-                    <img src="${item.snapshot}" alt="Theft scene snapshot" class="incident-thumb-img">
-                    <span class="thumb-zoom-badge">📸 View in Popup</span>
-                </div>
-            `;
-        }
-
         div.innerHTML = `
             <div class="incident-item-header">
                 <span class="incident-title">🚨 ${item.type}</span>
                 <span class="incident-time">${item.timestamp}</span>
             </div>
-            ${snapshotHtml}
             <div class="incident-item-footer">
                 <span>Frame #${item.frame}</span>
                 <span style="color: var(--accent-cyan);">Conf: ${item.confidence}</span>

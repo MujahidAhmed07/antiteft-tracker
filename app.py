@@ -76,6 +76,15 @@ async def get_index():
     return HTMLResponse(content="<h2>Web App is Initializing...</h2>")
 
 
+@app.get("/presentation", response_class=HTMLResponse)
+async def get_presentation():
+    pres_path = os.path.join("templates", "presentation.html")
+    if os.path.exists(pres_path):
+        with open(pres_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h2>Presentation Deck Not Found</h2>")
+
+
 @app.get("/api/demos")
 async def get_demos():
     """List available sample demo videos."""

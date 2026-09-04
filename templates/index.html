@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Shoplifting & Theft Detection System | SOC Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Security Bar -->
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon">
+                <span class="pulse-ring"></span>
+                <span class="icon-core">🛡️</span>
+            </div>
+            <div class="brand-text">
+                <h1>SENTINEL AI <span class="badge-tag">CCTV v2.0</span></h1>
+                <p>Autonomous Shoplifting & Theft Surveillance System</p>
+            </div>
+        </div>
+
+        <div class="header-status">
+            <div class="live-indicator">
+                <span class="rec-dot"></span>
+                <span class="rec-text">LIVE MONITORING</span>
+            </div>
+            <div class="time-widget" id="liveClock">00:00:00</div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-container">
+        
+        <!-- Left Column: Video Feed & Player -->
+        <section class="viewport-section">
+            <div class="card video-card">
+                <div class="card-header">
+                    <div class="title-with-pill">
+                        <span class="channel-pill">CAM 01</span>
+                        <span class="feed-title" id="currentFeedName">demo3.mp4</span>
+                    </div>
+                    <div class="header-badges">
+                        <span class="engine-badge">YOLOv8 Neural Core</span>
+                        <span class="status-pill" id="hudStatusBadge">READY</span>
+                    </div>
+                </div>
+
+                <!-- Video Viewport -->
+                <div class="video-wrapper">
+                    <!-- Video Stream / Poster -->
+                    <img id="videoStream" src="" alt="Live Surveillance Stream" class="stream-element hidden">
+                    <div id="videoPlaceholder" class="stream-placeholder">
+                        <div class="placeholder-icon">📹</div>
+                        <h3>Feed Offline / Standby</h3>
+                        <p>Select a sample demo video or upload your own video file to begin AI surveillance.</p>
+                        <button class="btn btn-primary" onclick="loadDefaultFeed()">Launch Default Feed (Demo 3)</button>
+                    </div>
+
+                    <!-- Watermark -->
+                    <div class="cctv-watermark">
+                        <span>SENTINEL AI SURVEILLANCE • HD 1080P</span>
+                        <span id="frameWatermark">FRM: 0</span>
+                    </div>
+                </div>
+
+                <!-- Playback & Control Bar -->
+                <div class="player-controls">
+                    <div class="btn-group">
+                        <button id="btnPlay" class="btn btn-action" onclick="startStream()">
+                            <span class="btn-icon">▶</span> Start Feed
+                        </button>
+                        <button id="btnStop" class="btn btn-action btn-danger" onclick="stopStream()">
+                            <span class="btn-icon">⏹</span> Stop Feed
+                        </button>
+                    </div>
+
+                    <div class="action-tools">
+                        <button id="btnDownload" class="btn btn-secondary" onclick="downloadRecording()">
+                            <span class="btn-icon">💾</span> Download Recording
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry Metrics Bar -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-data">
+                        <span class="metric-label">INFERENCE SPEED</span>
+                        <span class="metric-value" id="kpiFps">0.0 <small>FPS</small></span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">🚨</div>
+                    <div class="metric-data">
+                        <span class="metric-label">INCIDENTS FLAGGED</span>
+                        <span class="metric-value text-red" id="kpiAlerts">0</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">🎯</div>
+                    <div class="metric-data">
+                        <span class="metric-label">DETECTION CONFIDENCE</span>
+                        <span class="metric-value" id="kpiConf">0.25</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">🎞️</div>
+                    <div class="metric-data">
+                        <span class="metric-label">FRAME PROGRESS</span>
+                        <span class="metric-value" id="kpiFrames">0 / 0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Control Center & Incident Audit Log -->
+        <aside class="sidebar-section">
+            
+            <!-- Video Source Selector Card -->
+            <div class="card panel-card">
+                <div class="card-header">
+                    <h3>📹 Video Ingestion</h3>
+                </div>
+
+                <!-- Drag & Drop Upload Zone -->
+                <div class="upload-dropzone" id="dropZone">
+                    <input type="file" id="videoFileInput" accept="video/mp4,video/avi,video/mov,video/mkv" style="display:none;">
+                    <div class="dropzone-inner" onclick="document.getElementById('videoFileInput').click()">
+                        <div class="upload-icon">📤</div>
+                        <h4>Upload Custom Video</h4>
+                        <p>Drag & drop any video or <span>browse file</span></p>
+                        <small>Supports MP4, AVI, MOV, MKV</small>
+                    </div>
+                    <div id="uploadProgress" class="progress-bar-container hidden">
+                        <div class="progress-bar" id="progressBar"></div>
+                        <span id="uploadStatusText">Uploading 0%</span>
+                    </div>
+                </div>
+
+                <!-- Sample Demo Videos -->
+                <div class="demo-sources">
+                    <span class="section-label">SURVEILLANCE SAMPLES</span>
+                    <div class="demo-buttons-grid">
+                        <button class="btn btn-demo active" onclick="selectDemo('demo3.mp4', this)">
+                            <span class="demo-tag">Sample 1</span>
+                            <strong>Demo 3 (Incident Demo)</strong>
+                        </button>
+                        <button class="btn btn-demo" onclick="selectDemo('demo1.mp4', this)">
+                            <span class="demo-tag">Sample 2</span>
+                            <strong>Demo 1 (Theft Action)</strong>
+                        </button>
+                        <button class="btn btn-demo" onclick="selectDemo('demo.mp4', this)">
+                            <span class="demo-tag">Sample 3</span>
+                            <strong>Demo 0 (Overview)</strong>
+                        </button>
+                        <button class="btn btn-demo" onclick="selectDemo('demo2.mp4', this)">
+                            <span class="demo-tag">Sample 4</span>
+                            <strong>Demo 2 (Countertop)</strong>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Camera & Phone Testing -->
+                <div class="demo-sources live-cam-section">
+                    <span class="section-label">LIVE CAMERA & PHONE TESTING</span>
+                    <div class="cam-buttons-row">
+                        <button class="btn btn-demo btn-cam" onclick="selectCamera('0', this)">
+                            <span class="demo-tag">Cam 0</span>
+                            <strong>Default Webcam</strong>
+                        </button>
+                        <button class="btn btn-demo btn-cam" onclick="selectCamera('1', this)">
+                            <span class="demo-tag">Cam 1</span>
+                            <strong>📱 Phone / USB Cam</strong>
+                        </button>
+                        <button class="btn btn-demo btn-cam" onclick="selectCamera('2', this)">
+                            <span class="demo-tag">Cam 2</span>
+                            <strong>Aux Cam</strong>
+                        </button>
+                    </div>
+
+                    <!-- Phone IP Camera URL Streaming -->
+                    <div class="ip-stream-box">
+                        <span class="ip-stream-label">🌐 Phone Wi-Fi / IP Camera Stream</span>
+                        <div class="ip-input-group">
+                            <input type="text" id="ipCamUrl" placeholder="http://192.168.1.X:8080/video" spellcheck="false">
+                            <button class="btn btn-primary btn-sm" onclick="connectIpCamera()">Connect</button>
+                        </div>
+                        <div class="phone-tip">
+                            <span>💡 <strong>Phone Camera Setup:</strong> Use <em>DroidCam</em> / <em>Iriun Webcam</em> over USB (select Cam 0 or 1), or install <em>IP Webcam</em> on your phone & paste the URL above.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parameters Controls -->
+                <div class="settings-group">
+                    <div class="slider-header">
+                        <span class="section-label">DETECTION CONFIDENCE</span>
+                        <span class="slider-value" id="confSliderValue">0.25</span>
+                    </div>
+                    <input type="range" id="confSlider" min="0.10" max="0.80" step="0.05" value="0.25" oninput="updateConf(this.value)">
+
+                    <div class="slider-header" style="margin-top: 14px;">
+                        <span class="section-label">PROXIMITY GAP SENSITIVITY</span>
+                        <span class="slider-value" id="proxSliderValue">0.45</span>
+                    </div>
+                    <input type="range" id="proxSlider" min="0.15" max="0.90" step="0.05" value="0.45" oninput="updateProximity(this.value)">
+                </div>
+            </div>
+
+            <!-- Real-time Incident Audit Log Card -->
+            <div class="card panel-card log-card">
+                <div class="card-header">
+                    <div class="header-left">
+                        <h3>📋 Incident Audit Feed</h3>
+                        <span class="counter-badge" id="incidentCounter">0 Events</span>
+                    </div>
+                    <button class="btn btn-xs btn-outline" onclick="clearIncidentLog()">Clear</button>
+                </div>
+
+                <div class="incident-feed-container" id="incidentFeed">
+                    <div class="empty-feed" id="emptyLogState">
+                        <span>🛡️</span>
+                        <p>No active incidents detected.</p>
+                        <small>System is continuously monitoring for suspicious theft behaviors.</small>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+    </main>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

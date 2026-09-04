@@ -1,0 +1,38 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Video recordings & outputs
+*.avi
+shoplifting_output.avi
+test_output.avi
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Uploaded files
+uploads/*
+
+# Output recordings
+outputs/*
+
+# Model weights (large files)
+*.pt
+
+# OS
+.DS_Store
+Thumbs.db

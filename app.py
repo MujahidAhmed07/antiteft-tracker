@@ -45,7 +45,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Shared detection engine
-engine = ShopliftingDetectionEngine(weights_path="yolov8n.pt")
+engine = ShopliftingDetectionEngine(weights_path="yolo11n.pt")
 LATEST_OUTPUT_FILE = "outputs/latest_recording.avi"
 
 # API key for optional authentication

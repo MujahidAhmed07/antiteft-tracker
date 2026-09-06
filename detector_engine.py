@@ -23,11 +23,12 @@ from detection_utils import (
 
 
 class ShopliftingDetectionEngine:
-    def __init__(self, weights_path: str = "yolov8n.pt"):
+    def __init__(self, weights_path: str = "yolo11n.pt"):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"[ENGINE] Loading model on: {self.device}")
-        if not os.path.exists(weights_path) and not weights_path.endswith(".pt"):
-            weights_path += ".pt"
+        if not os.path.exists(weights_path):
+            print(f"[WARNING] Weights '{weights_path}' not found. Loading standard yolo11n.pt...")
+            weights_path = "yolo11n.pt"
         if not os.path.exists(weights_path):
             weights_path = "yolov8n.pt"
         self.model = YOLO(weights_path)

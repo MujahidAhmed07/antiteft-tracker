@@ -12,10 +12,10 @@ from ultralytics import YOLO
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train YOLOv8 Shoplifting Detector")
+    parser = argparse.ArgumentParser(description="Train YOLO11 Shoplifting Detector")
     parser.add_argument(
-        "--model", type=str, default="yolov8n.yaml",
-        help="YOLO model config (yolov8n.yaml, yolov8s.yaml, etc.)",
+        "--model", type=str, default="yolo11n.pt",
+        help="YOLO model config or weights (yolo11n.pt, yolo11s.pt, etc.)",
     )
     parser.add_argument(
         "--data", type=str, default="FYP-Shoplift-1/data.yaml",

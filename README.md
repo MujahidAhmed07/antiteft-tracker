@@ -71,6 +71,7 @@ flowchart LR
 ├── train.py                   # Model fine-tuning and transfer learning pipeline
 ├── datagetimage.py            # Roboflow dataset fetcher (environment-variable driven)
 ├── requirements.txt           # Python dependencies
+├── YOLOV8_DOCUMENTATION.md    # YOLOv8 Architecture, Heuristics & Performance Guide
 ├── .env.example               # Template environment configuration (no secrets!)
 ├── .gitignore                 # Exclusion rules for secrets, weights, and caches
 ├── static/

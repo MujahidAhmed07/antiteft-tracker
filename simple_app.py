@@ -41,7 +41,7 @@ def pick_video_and_run():
     output_path = os.path.splitext(file_path)[0] + "_annotated.avi"
 
     detector = ShopliftingDetector(
-        weights_path="yolov8n.pt",
+        weights_path="yolo11n.pt",
         input_path=file_path,
         output_path=output_path,
         conf_threshold=0.25,
@@ -176,7 +176,7 @@ def launch_gui_launcher():
         print(f"\n[INFO] Running detection on: {video}")
         output = "shoplifting_output.avi"
         detector = ShopliftingDetector(
-            weights_path="yolov8n.pt",
+            weights_path="yolo11n.pt",
             input_path=video,
             output_path=output,
             conf_threshold=0.25,

@@ -29,7 +29,7 @@ class ShopliftingDetector:
 
     def __init__(
         self,
-        weights_path: str = "yolov8n.pt",
+        weights_path: str = "yolo11n.pt",
         input_path: str = "demo3.mp4",
         output_path: str = "shoplifting_output.avi",
         conf_threshold: float = 0.25,
@@ -64,8 +64,8 @@ class ShopliftingDetector:
                 weights_path = weights_path + ".pt"
 
             if not os.path.exists(weights_path):
-                print(f"[WARNING] Weights '{weights_path}' not found. Loading standard yolov8n.pt...")
-                weights_path = "yolov8n.pt"
+                print(f"[WARNING] Weights '{weights_path}' not found. Loading standard yolo11n.pt...")
+                weights_path = "yolo11n.pt"
 
             model = YOLO(weights_path)
             model.to(self.device)
@@ -262,7 +262,7 @@ class ShopliftingDetector:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="AI Shoplifting & Surveillance Detection")
-    parser.add_argument("--weights", type=str, default="yolov8n.pt", help="Path to YOLO weights (.pt)")
+    parser.add_argument("--weights", type=str, default="yolo11n.pt", help="Path to YOLO weights (.pt)")
     parser.add_argument("--input", type=str, default="demo3.mp4", help="Input video path or webcam index (0)")
     parser.add_argument("--output", type=str, default="shoplifting_output.avi", help="Output annotated video path")
     parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")
